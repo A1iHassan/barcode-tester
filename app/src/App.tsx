@@ -9,7 +9,7 @@ function App() {
   useEffect(() => {
     const codeReader = new BrowserMultiFormatReader();
     // null deviceId defaults to the primary outward-facing camera
-    const deviceId = undefined; // Use undefined for default camera
+    const deviceId = null; // Use undefined for default camera
 
     // The reader needs to be bound to the video element.
     // It will automatically request the camera stream for you,
