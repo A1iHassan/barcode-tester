@@ -7,47 +7,34 @@ function App() {
   const videoRef = useRef<HTMLVideoElement>(null)
 
   useEffect(() => {
-    const startStream = async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: false,
-          video: {
-            facingMode: { exact: "environment" }
-          }
-        })
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream
-        }
-      } catch (err) {
-        console.error("Error accessing camera:", err)
+    const codeReader = new BrowserMultiFormatReader();
+    // null deviceId defaults to the primary outward-facing camera
+    const deviceId = undefined; // Use undefined for default camera
+
+    // The reader needs to be bound to the video element.
+    // It will automatically request the camera stream for you,
+    // so we don't need the manual getUserMedia call anymore.
+    codeReader.decodeFromVideoDevice(deviceId, videoRef.current, (result, error) => {
+      if (result) {
+        // Successful capture
+        setBarcodeValue(result.getText())
+        console.log('Barcode Format:', result.getBarcodeFormat());
+
+        // Terminate active stream and decoding loop after a successful read
+        codeReader.reset();
       }
-    }
 
-    startStream()
-  }, [])
+      // Ignore typical Not Found errors during active scanning frames
+      if (error && !(error instanceof NotFoundException)) {
+        console.error('Processing error:', error);
+      }
+    })
 
-  const codeReader = new BrowserMultiFormatReader();
-
-  const videoElementId = 'video-stream';
-
-  // null deviceId defaults to the primary outward-facing camera
-  const deviceId = null;
-
-  codeReader.decodeFromVideoDevice(deviceId, videoElementId, (result, error) => {
-    if (result) {
-      // Successful capture
-      setBarcodeValue(result.getText())
-      console.log('Barcode Format:', result.getBarcodeFormat());
-
-      // Terminate active stream and decoding loop
+    // Cleanup function when component unmounts
+    return () => {
       codeReader.reset();
     }
-
-    // Ignore typical Not Found errors during active scanning frames
-    if (error && !(error instanceof NotFoundException)) {
-      console.error('Processing error:', error);
-    }
-  })
+  }, []) // Empty dependency array ensures this only runs once on mount
 
   return (
     <div className="page">
